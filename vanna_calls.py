@@ -1,11 +1,23 @@
 import streamlit as st
 
-from vanna.remote import VannaDefault
+#from vanna.remote import VannaDefault
+from vanna.ollama import Ollama
+from vanna.chromadb import ChromaDB_VectorStore
+
+class MyVanna(ChromaDB_VectorStore, Ollama):
+    def __init__(self, config=None):
+        ChromaDB_VectorStore.__init__(self, config=config)
+        Ollama.__init__(self, config=config)
+
+
 
 @st.cache_resource(ttl=3600)
 def setup_vanna():
-    vn = VannaDefault(api_key=st.secrets.get("VANNA_API_KEY"), model='chinook')
+    #vn = VannaDefault(api_key=st.secrets.get("VANNA_API_KEY"), model='chinook')
+    vn = MyVanna(config={'model': 'llama3.1:8b'})#instruct-q8_0'})
+    #vn.connect_to_mssql(odbc_conn_str='DRIVER={ODBC Driver 17 for SQL Server};SERVER=minipc;DATABASE=iatest;UID=gg;PWD=ostia')
     vn.connect_to_sqlite("https://vanna.ai/Chinook.sqlite")
+    
     return vn
 
 @st.cache_data(show_spinner="Generating sample questions ...")
@@ -56,3 +68,5 @@ def generate_followup_cached(question, sql, df):
 def generate_summary_cached(question, df):
     vn = setup_vanna()
     return vn.generate_summary(question=question, df=df)
+
+
